@@ -1,0 +1,338 @@
+-------------------------------------------------------------
+Code to create, query and edit graph in Neo4J using Cypher queries
+ 
+@Author - Abhishek Anand Singh
+IUMail - aasingh@indiana.edu
+--------------------------------------------------------------
+
+--------------------------------------------------------------
+Code to get csv output using mongoexport
+-------------------------------------------------------------
+bin/mongoexport --host localhost --db ILS-PRJ-collection PaperKeywords --csv --out Keyword.csv --fields _id,PaperID," KeyWordName"
+bin/mongoexport --host localhost --db ILS-PRJ-collection PapersAuthorAffiliations --csv --out Author.csv --fields _id,PaperID," AuthorID"
+bin/mongoexport --host localhost --db ILS-PRJ --collection PapersReferences --csv --out References.csv --fields _id,PaperId," PaperreferenceID"
+bin/mongoexport --host localhost --db ILS-PRJ-collection Papers --csv --out Papers.csv --fields _id,PaperID," PaperTitle"," NPaperTitle"," PublishYear"," NVenueName"," PaperRank"
+-------------------------------------------------------------
+
+
+--------------------------------------------------------------
+Code to create constratints on the Neo4J database
+--------------------------------------------------------------
+CREATE CONSTRAINT ON (k:Keyword) ASSERT k.Keyword IS UNIQUE;
+CREATE CONSTRAINT ON (p:Paper) ASSERT p.PaperID IS UNIQUE;
+CREATE CONSTRAINT ON (a:Author) ASSERT a.AuthorID IS UNIQUE;
+
+--------------------------------------------------------------
+Code to import and create Paper nodes
+--------------------------------------------------------------
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Papers.csv' AS line
+WITH line
+CREATE (paper:Paper {paperID: line.PaperID, year: TOINT(line.PublishYear), name: UPPER(line.Title), venue: line.Venue, rank: TOINT(line.PaperRank)})
+
+--------------------------------------------------------------
+Code to merge and create published year node 
+--------------------------------------------------------------
+MATCH (paper:Paper) where paper.year IS NOT NULL
+MERGE (publishedYear:PublishedYear {year: TOINT(paper.year)}) 
+CREATE (paper)-[:PUBLISHED_IN]->(publishedYear)
+
+--------------------------------------------------------------
+Code to create Keyword node and its relationship with Paper node 
+--------------------------------------------------------------
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Downloads/PaperData/Paper_KW.csv' AS line
+WITH line
+MATCH (paper:Paper2 {paperID: line.PId})
+MERGE (keyword:Keyword2 {keyword: line.KW})
+CREATE (paper)-[:HAS_KEYWORD2]->(keyword)
+
+--------------------------------------------------------------
+Code to create Author node and its relationship with Paper node 
+--------------------------------------------------------------
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Downloads/PaperData/Paper_Author.csv' AS line
+WITH line
+MATCH (paper:Paper2 {paperID: line.PId})
+MERGE (author:Author2 {authorID: line.AuthorId})
+CREATE (paper)-[:HAS_AUTHOR2]->(author)
+
+--------------------------------------------------------------
+Code to create References node and its relationship with Paper node
+--------------------------------------------------------------
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Downloads/PaperData/Paper_References.csv' AS line
+WITH line 
+MATCH (paper:Paper2 {paperID: line.PId})
+MERGE (reference:Reference2 {referenceID: line.PRefId})
+CREATE (paper)-[:REFERS2]->(reference)
+
+--------------------------------------------------------------
+Few of the important queries to traverse the nodes
+--------------------------------------------------------------
+ 
+MATCH (n)-[r:HAS_KEYWORD]->(k:Keyword {keyword: "gas chromatography"}) 
+MATCH (n {venue: "nips"})
+RETURN n
+
+MATCH (n:Reference) RETURN COUNT(n)
+
+MATCH (k:Keyword2 {keyword: "evolutionary_algorithm"})<-[:HAS_KEYWORD2]-(p:Paper2)
+RETURN p
+
+MATCH (k:Keyword2 {keyword: "machine_learning"})<-[:HAS_KEYWORD2]-(p:Paper2)
+RETURN p
+
+MATCH (p)-[r:HAS_AUTHOR2]->(a)
+return p,COUNT(r) ORDER BY COUNT(r) DESC
+LIMIT 1000
+
+MATCH (p:Paper2)-[:HAS_AUTHOR2]->(a:Author2 {authorID:"1227C55A"})
+MATCH (p:Paper2)-[:REFERS2]->(j:Paper2)
+return j
+
+MATCH (n)-[:REFERS2]->(p)
+WHERE n.paperID = p.referenceID
+RETURN n, p
+
+MATCH (p)-[r:HAS_AUTHOR2]->(a)
+return p,COUNT(r) ORDER BY COUNT(r) DESC
+LIMIT 1000
+
+MATCH (p:Paper2 {paperID :"58CB60DA"})-[:HAS_KEYWORD2]->(k)<-[:HAS_KEYWORD2]-(n)
+RETURN p, n LIMIT 25
+
+MATCH (n:Paper2 {paperID : "6EA81631"})-[:HAS_AUTHOR2]->(a),(n)-[:REFERS2]-(r), (p)-[:HAS_AUTHOR2]->(a), (p)-[:HAS_KEYWORD2]->(k)
+RETURN DISTINCT r.referenceID, p.paperID ORDER BY p.paperID
+
+
+--------------------------------------------------------------
+All Other Rough Code to test 
+--------------------------------------------------------------
+ 
+
+1-	
+CREATE CONSTRAINT ON (p:Paper) ASSERT p.PaperID IS UNIQUE;
+	
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Desktop/Sample/Papers.csv' AS line	
+
+CREATE (paper:Paper {paperID: line.PaperID, name: UPPER(line.Title), rank: TOINT(line.PaperRank)})
+MERGE (publishedYear:PublishedYear {year: TOINT(line.PublishYear)})
+CREATE (paper)-[:PUBLISHED_IN]->(publishedYear)
+	
+	1 PART 2
+	
+
+USING PERIODIC COMMIT
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Papers.csv' AS line
+WITH line
+LIMIT 10
+CREATE (paper:Paper {paperID: line.PaperID, name: UPPER(line.Title), venue: line.Venue, rank: TOINT(line.PaperRank)})
+MERGE (publishedYear:PublishedYear {year: TOINT(line.PublishYear)})
+CREATE (paper)-[:PUBLISHED_IN]->(publishedYear)
+
+MATCH (paper:Paper) where paper.year IS NOT NULL
+MERGE (publishedYear:PublishedYear {year: TOINT(paper.year)}) 
+CREATE (paper)-[:PUBLISHED_IN]->(publishedYear)
+
+	1 PART 3
+	
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Papers.csv' AS line
+WITH line
+LIMIT 10000
+CREATE (paper:Paper {paperID: line.PaperID, year: TOINT(line.PublishYear), name: UPPER(line.Title), venue: line.Venue, rank: TOINT(line.PaperRank)})
+
+MATCH (paper:Paper) where paper.year IS NOT NULL
+MERGE (publishedYear:PublishedYear {year: TOINT(paper.year)}) 
+CREATE (paper)-[:PUBLISHED_IN]->(publishedYear)
+
+2- 
+CREATE CONSTRAINT ON (k:Keyword) ASSERT k.Keyword IS UNIQUE;
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Desktop/Sample/PaperKeyword.csv' AS line
+MERGE (keyword:Keyword {name: UPPER(line.Keyword)})
+
+3- 
+CREATE (keyword)-[KEYWORD_OF]->(paper)
+
+CREATE (paper)-[PUBLISHED_IN]->(publicationYear)
+
+
+5-
+Relationship between paper and published year with paper names and rank property
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Desktop/Sample/Papers.csv' AS line	
+
+CREATE (paper:Paper {id: line.PaperID, name: UPPER(line.Title), rank: TOINT(line.PaperRank)})
+MERGE (publishedYear: PublishedYear {year: line.PublishYear})
+CREATE (paper)-[:PUBLISHED_IN]->(publishedYear)
+
+6-
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Keyword.csv' AS line
+WITH line
+LIMIT 100
+MERGE (keyword: Keyword {keyword: line.Keyword})
+CREATE (keyword)-[:KEYWORD_OF]->(paper)
+
+	6 PART 2
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Keyword.csv' AS line
+WITH line
+LIMIT 100
+CREATE (paper:Paper {PaperID: line.PaperID})
+MERGE (keyword:Keyword {keyword: line.Keyword})
+CREATE (paper)-[:HAS_KEYWORD]->(keyword)
+
+	6 PART 3
+CREATE CONSTRAINT ON (k:Keyword) ASSERT k.Keyword IS UNIQUE;
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Keyword.csv' AS line
+WITH line
+LIMIT 10000
+MERGE (keyword:Keyword {keyword: line.Keyword})
+CREATE (paper)-[:HAS_KEYWORD]->(keyword)
+
+
+7- 
+CREATE CONSTRAINT ON (a:Author) ASSERT a.AuthorID IS UNIQUE;
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Author.csv' AS line
+WITH line
+LIMIT 1
+RETURN line
+
+8- 
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/References.csv' AS line
+WITH line
+LIMIT 1
+MATCH (paper:Paper {paperID: line.PaperID})
+MERGE (reference:Reference {referenceID: line.ReferenceID})
+CREATE (paper)-[:REFERS]->(reference)
+
+***** 9- 
+MATCH (n)-[r:HAS_KEYWORD]->(k:Keyword {keyword: "gas chromatography"}) 
+MATCH (n {venue: "nips"})
+RETURN n
+
+MATCH (n:Reference) RETURN COUNT(n)
+
+MATCH(n:Paper) where n.name =~ '.*poverty.*' return n;
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Papers.csv' AS line
+MATCH(zebra:Zebra) WHERE NOT line.name CONTAINS '.*\"\".*'
+RETURN zebra
+
+MATCH (k:Keyword2 {keyword: "evolutionary_algorithm"})<-[:HAS_KEYWORD2]-(p:Paper2)
+RETURN p
+
+MATCH (k:Keyword2 {keyword: "machine_learning"})<-[:HAS_KEYWORD2]-(p:Paper2)
+RETURN p
+
+
+MATCH (n)-[:REFERS2]->(p)
+WHERE n.paperID = p.referenceID
+RETURN n, p
+
+MATCH (p)-[r:HAS_AUTHOR2]->(a)
+return p,COUNT(r) ORDER BY COUNT(r) DESC
+LIMIT 1000
+
+MATCH (p:Paper2 {paperID :"58CB60DA"})-[:HAS_KEYWORD2]->(k)<-[:HAS_KEYWORD2]-(n)
+RETURN p, n LIMIT 25
+
+MATCH (n:Paper2 {paperID : "6EA81631"})-[:HAS_AUTHOR2]->(a),(n)-[:REFERS2]-(r), (p)-[:HAS_AUTHOR2]->(a), (p)-[:HAS_KEYWORD2]->(k)
+RETURN DISTINCT r.referenceID, p.paperID ORDER BY p.paperID
+
+
+Schr""o
+
+10 - 
+USING PERIODIC COMMIT
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Papers.csv' AS line
+WITH line
+LIMIT 50000
+CREATE (paper:Paper {paperID: line.PaperID, name: UPPER(line.Title), venue: line.Venue, rank: TOINT(line.PaperRank)})
+WITH line
+MATCH (paper:Paper) where paper.year IS NOT NULL
+MERGE (publishedYear:PublishedYear {year: TOINT(paper.year)}) 
+CREATE (paper)-[:PUBLISHED_IN]->(publishedYear)
+
+
+11- HELPFUL
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Documents/mongodb/Papers.csv' AS line
+WITH line WHERE line.PublishYear = ""
+RETURN line
+
+
+
+
+************NEW
+
+Paper Node-------
+
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Downloads/PaperData/Paper.csv' AS line
+WITH line
+CREATE (paper2:Paper2 {paperID: line.PId, year: TOINT(line.PublYear), rank: TOINT(line.PRank), isConf: line.IsConf, isJrnl: line.IsJrnl})
+
+PublishedYear Node------------
+
+MATCH (paper:Paper2) where paper.year IS NOT NULL
+MERGE (publishedYear:PublishedYear2 {year: TOINT(paper.year)}) 
+CREATE (paper)-[:PUBLISHED_IN2]->(publishedYear)
+
+
+Keyword Node----------
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Downloads/PaperData/Paper_KW.csv' AS line
+WITH line
+MATCH (paper:Paper2 {paperID: line.PId})
+MERGE (keyword:Keyword2 {keyword: line.KW})
+CREATE (paper)-[:HAS_KEYWORD2]->(keyword)
+
+Author Node ------------
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Downloads/PaperData/Paper_Author.csv' AS line
+WITH line
+MATCH (paper:Paper2 {paperID: line.PId})
+MERGE (author:Author2 {authorID: line.AuthorId})
+CREATE (paper)-[:HAS_AUTHOR2]->(author)
+
+Reference Node-------------
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM
+'file:///Users/Abhishek/Downloads/PaperData/Paper_References.csv' AS line
+WITH line 
+MATCH (paper:Paper2 {paperID: line.PId})
+MERGE (reference:Reference2 {referenceID: line.PRefId})
+CREATE (paper)-[:REFERS2]->(reference)
+
+
