@@ -14,15 +14,14 @@
 *>SAMPLING:*
 
 * Sampling.java:
-
-> This class primarily does the work of sampling. We started with a random sample of 100,000 papers and fetched corresponding data for these papers from various other tables. 
+This class primarily does the work of sampling. We started with a random sample of 100,000 papers and fetched corresponding data for these papers from various other tables. 
 				
 *>DATA PREPARATION:*
 
 * JsonToNeo4J.java: 
 This class primarily converts the json input file to separate csv files as per the tables so that they can be imported as nodes and relationships in neo4j database.
 
-2. Paper.java:
+* Paper.java:
 This is a data class for holding Paper objects in the various tasks and other files.
 		
 *>PREDICTION AND RANKING:*
