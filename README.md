@@ -13,54 +13,47 @@
 
 *>SAMPLING:*
 
-1. Sampling.java:
+* Sampling.java:
 
 > This class primarily does the work of sampling. We started with a random sample of 100,000 papers and fetched corresponding data for these papers from various other tables. 
 				
 *>DATA PREPARATION:*
 
-1. JsonToNeo4J.java: 
-
-> This class primarily converts the json input file to separate csv files as per the tables so that they can be imported as nodes and relationships in neo4j database.
+* JsonToNeo4J.java: 
+This class primarily converts the json input file to separate csv files as per the tables so that they can be imported as nodes and relationships in neo4j database.
 
 2. Paper.java:
-
-> This is a data class for holding Paper objects in the various tasks and other files.
+This is a data class for holding Paper objects in the various tasks and other files.
 		
 *>PREDICTION AND RANKING:*
 
-1. PaperScore.java: 
-
-> This is a data class for holding the paper scores of the papers and for storing the calculated final score.
+* PaperScore.java: 
+This is a data class for holding the paper scores of the papers and for storing the calculated final score.
 		
-2. PaperScoreNormVars.java:
+* PaperScoreNormVars.java:
+This class primarily contains static variables for saving the Normalization variables. These variables helped in normalizing the scores of the Author Popularity, Paper rank, Keyword match and Paper year scores. 
 
-> This class primarily contains static variables for saving the Normalization variables. These variables helped in normalizing the scores of the Author Popularity, Paper rank, Keyword match and Paper year scores. 
+* PaperScoreWeights.java:
+This is an ENUM to hold the weight given to the various scores in the Paper scores calculation.
 
-3. PaperScoreWeights.java:
+* Prediction.java:
+This class primarily works on the predicting the citation recommendations for various papers using Recommendation class. This class gives output in the steps of 20 from 20 predictions to 100 predictions.
 
-> This is an ENUM to hold the weight given to the various scores in the Paper scores calculation.
-
-4. Prediction.java:
-
-> This class primarily works on the predicting the citation recommendations for various papers using Recommendation class. This class gives output in the steps of 20 from 20 predictions to 100 predictions.
-
-5. Recommendation.java:
-
-> This class primarily does the work of ranking the citation recommendations. The scores are calculated, final score is calculated and the recommendations are sorted in descending order of the final score.
+* Recommendation.java:
+This class primarily does the work of ranking the citation recommendations. The scores are calculated, final score is calculated and the recommendations are sorted in descending order of the final score.
 
 ###  Task 2: Predict Papers with most relevant Keywords
 ##### In task 2, given a paper id, we try to predict key words that the paper can be tagged with. To run the below given python files, the PaperCollection.json is required to compute page rank on the 100000 paper records present in it. 
 
 Important Files :
 
-> PageRank_Rec.py:-  Implements Page Rank and compute most relevant paper keywords for a target paper.  
+* PageRank_Rec.py:-  Implements Page Rank and compute most relevant paper keywords for a target paper.  
 
-> keyWordCloud.ipynb:- Used to visualize our output pertaining to predicting keywords. 
+* keyWordCloud.ipynb:- Used to visualize our output pertaining to predicting keywords. 
 
-> PaperCollection.json:- Used for storing the subset of the papers data in the .json format.
+* PaperCollection.json:- Used for storing the subset of the papers data in the .json format.
 
-> buildGraphFromPy.json:-Used for build a graph based on schema designed from the .py env. 
+* buildGraphFromPy.json:-Used for build a graph based on schema designed from the .py env. 
 
 ### Evaluation
 	
